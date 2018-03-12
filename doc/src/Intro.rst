@@ -38,7 +38,7 @@ The BCM modules provide some high-level cmake functions to take care of all the 
     include(BCMDeploy)
     include(BCMSetupVersion)
 
-    bcm_setup_version(VERSION 1.64.0)
+    bcm_setup_version(VERSION 1.58.0)
 
     add_library(boost_config INTERFACE)
     add_library(boost::config ALIAS boost_config)

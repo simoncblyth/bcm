@@ -1,9 +1,9 @@
-option(BUILD_TESTING off)
+option(BUILD_TESTS "Build testing suite" FALSE)
 
 enable_testing()
 
 include(ProcessorCount)
-ProcessorCount(_bcm_ctest_parallel_level)
+processorcount(_bcm_ctest_parallel_level)
 set(CTEST_PARALLEL_LEVEL ${_bcm_ctest_parallel_level} CACHE STRING "CTest parallel level")
 
 if(NOT TARGET check)
@@ -27,13 +27,13 @@ endif()
 
 function(bcm_mark_as_test)
     foreach(TEST_TARGET ${ARGN})
-        if (NOT BUILD_TESTING)
+        if(NOT BUILD_TESTS)
             get_target_property(TEST_TARGET_TYPE ${TEST_TARGET} TYPE)
             # We can onle use EXCLUDE_FROM_ALL on build targets
             if(NOT "${TEST_TARGET_TYPE}" STREQUAL "INTERFACE_LIBRARY")
                 set_target_properties(${TEST_TARGET}
-                    PROPERTIES EXCLUDE_FROM_ALL TRUE
-                )
+                                      PROPERTIES EXCLUDE_FROM_ALL TRUE
+                                      )
             endif()
         endif()
         add_dependencies(tests ${TEST_TARGET})
@@ -52,14 +52,14 @@ endfunction()
 
 foreach(scope DIRECTORY TARGET)
     define_property(${scope} PROPERTY "BCM_TEST_DEPENDENCIES" INHERITED
-        BRIEF_DOCS "Default test dependencies"
-        FULL_DOCS "Default test dependencies"
-    )
+                    BRIEF_DOCS "Default test dependencies"
+                    FULL_DOCS "Default test dependencies"
+                    )
 endforeach()
 
 function(bcm_test_link_libraries)
     bcm_create_internal_targets()
-    if(BUILD_TESTING)
+    if(BUILD_TESTS)
         set_property(DIRECTORY APPEND PROPERTY BCM_TEST_DEPENDENCIES ${ARGN})
         target_link_libraries(_bcm_internal_tests-${PROJECT_NAME} ${ARGN})
     else()
@@ -74,6 +74,9 @@ function(bcm_test_link_libraries)
             else()
                 set_property(DIRECTORY APPEND PROPERTY BCM_TEST_DEPENDENCIES ${TARGET})
                 target_link_libraries(_bcm_internal_tests-${PROJECT_NAME} ${TARGET})
+            endif()
+            if(BUILD_SHARED_LIBRARIES)
+                target_compile_definitions(_bcm_internal_tests-${PROJECT_NAME} PRIVATE -DBOOST_TEST_DYN_LINK=1 -DBOOST_TEST_NO_AUTO_LINK=1)
             endif()
         endforeach()
     endif()
@@ -115,8 +118,8 @@ function(bcm_test)
     if(PARSE_COMPILE_ONLY)
         add_library(${TEST_NAME} STATIC EXCLUDE_FROM_ALL ${SOURCES})
         add_test(NAME ${TEST_NAME}
-            COMMAND ${CMAKE_COMMAND} --build . --target ${TEST_NAME} --config $<CONFIGURATION>
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+                 COMMAND ${CMAKE_COMMAND} --build . --target ${TEST_NAME} --config $<CONFIGURATION>
+                 WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
         # set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK bcm_test_compile_only)
     else()
@@ -149,6 +152,11 @@ endif()
             add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME} ${PARSE_ARGS} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
         endif()
     endif()
+
+    if(BUILD_SHARED_LIBRARIES)
+        target_compile_definitions(${TEST_NAME} PRIVATE -DBOOST_TEST_DYN_LINK=1 -DBOOST_TEST_NO_AUTO_LINK=1)
+    endif()
+
     if(PARSE_WILL_FAIL)
         set_tests_properties(${TEST_NAME} PROPERTIES WILL_FAIL TRUE)
     endif()
@@ -176,20 +184,20 @@ function(bcm_test_header)
     endif()
 
     if(PARSE_STATIC)
-        file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/header-main-include-${TEST_NAME}.cpp 
-            "#include <${PARSE_HEADER}>\nint main() {}\n"
-        )
-        file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/header-static-include-${TEST_NAME}.cpp 
-            "#include <${PARSE_HEADER}>\n"
-        )
+        file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/header-main-include-${TEST_NAME}.cpp
+             "#include <${PARSE_HEADER}>\nint main() {}\n"
+             )
+        file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/header-static-include-${TEST_NAME}.cpp
+             "#include <${PARSE_HEADER}>\n"
+             )
         bcm_test(NAME ${TEST_NAME} SOURCES
-            ${CMAKE_CURRENT_BINARY_DIR}/header-main-include-${TEST_NAME}.cpp 
-            ${CMAKE_CURRENT_BINARY_DIR}/header-static-include-${TEST_NAME}.cpp
-        )
+                 ${CMAKE_CURRENT_BINARY_DIR}/header-main-include-${TEST_NAME}.cpp
+                 ${CMAKE_CURRENT_BINARY_DIR}/header-static-include-${TEST_NAME}.cpp
+                 )
     else()
         bcm_test(NAME ${TEST_NAME} CONTENT
-            "#include <${PARSE_HEADER}>\nint main() {}\n"
-        )
+                 "#include <${PARSE_HEADER}>\nint main() {}\n"
+                 )
     endif()
     set_tests_properties(${TEST_NAME} PROPERTIES LABELS ${PROJECT_NAME})
 endfunction(bcm_test_header)

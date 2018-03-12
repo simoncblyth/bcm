@@ -8,7 +8,7 @@ bcm_mark_as_test
 
 .. program:: bcm_mark_as_test
 
-This marks the target as a test, so it will be built with the ``tests`` target. If ``BUILD_TESTING`` is set to off then the target will not be built as part of the all target.
+This marks the target as a test, so it will be built with the ``tests`` target. If ``BUILD_TESTS`` is set to off then the target will not be built as part of the all target.
 
 -----------------------
 bcm_test_link_libraries
