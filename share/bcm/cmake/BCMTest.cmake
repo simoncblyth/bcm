@@ -120,11 +120,13 @@ function(bcm_test)
         add_test(NAME ${TEST_NAME}
                  COMMAND ${CMAKE_COMMAND} --build . --target ${TEST_NAME} --config $<CONFIGURATION>
                  WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+        target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
         # set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK bcm_test_compile_only)
     else()
         add_executable(${TEST_NAME} ${SOURCES})
         bcm_mark_as_test(${TEST_NAME})
+        target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
         if(WIN32)
             foreach(CONFIG ${CMAKE_CONFIGURATION_TYPES} "")
                 file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}-test-run-${CONFIG}.cmake CONTENT "
