@@ -1,4 +1,3 @@
-
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
 include(BCMFuture)
 enable_testing()
@@ -25,4 +24,19 @@ function(find_subdirectories INPUT_DIRECTORY SUBMODULE_HEADER)
             endif()
         endif()
     endforeach()
+endfunction()
+
+function(workspace WORKSPACE_NAME)
+    set(options)
+    set(oneValueArgs DESCRIPTION VERSION)
+    set(multiValueArgs LANGUAGES)
+
+    cmake_parse_arguments(PARSE "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    if(PARSE_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unknown keywords given to workspace(): \"${PARSE_UNPARSED_ARGUMENTS}\"")
+    endif()
+
+    project(${WORKSPACE_NAME} ${PARSE_VERSION} ${PARSE_DESCRIPTION} ${PARSE_LANGUAGES})
+    set(CMAKE_WORKSPACE_NAME ${WORKSPACE_NAME} PARENT_SCOPE)
 endfunction()
