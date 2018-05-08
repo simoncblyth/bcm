@@ -16,7 +16,7 @@ function(bcm_install_targets)
     set(BIN_INSTALL_DIR ${CMAKE_INSTALL_BINDIR})
     set(LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
     set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
-    
+
     foreach(TARGET ${PARSE_TARGETS})
         foreach(INCLUDE ${PARSE_INCLUDE})
             get_filename_component(INCLUDE_PATH ${INCLUDE} ABSOLUTE)
@@ -29,11 +29,12 @@ function(bcm_install_targets)
         install(DIRECTORY ${INCLUDE}/ DESTINATION ${INCLUDE_INSTALL_DIR})
     endforeach()
 
-    install(TARGETS ${PARSE_TARGETS} 
-        EXPORT ${EXPORT_FILE}
-        RUNTIME DESTINATION ${BIN_INSTALL_DIR}
-        LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-        ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+    install(TARGETS ${PARSE_TARGETS}
+            EXPORT ${EXPORT_FILE}
+            RUNTIME DESTINATION ${BIN_INSTALL_DIR}
+            OBJECTS DESTINATION ${OBJ_INSTALL_DIR}
+            LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+            ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
 
 endfunction()
 
