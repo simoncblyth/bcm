@@ -32,7 +32,6 @@ function(bcm_install_targets)
     install(TARGETS ${PARSE_TARGETS}
             EXPORT ${EXPORT_FILE}
             RUNTIME DESTINATION ${BIN_INSTALL_DIR}
-            OBJECTS DESTINATION ${OBJ_INSTALL_DIR}
             LIBRARY DESTINATION ${LIB_INSTALL_DIR}
             ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
 
