@@ -79,7 +79,7 @@ else()
             $<$<STREQUAL:$<UPPER_CASE:$<TARGET_PROPERTY:CXX_WARNINGS>>,ALL>:-pedantic>
             $<$<STREQUAL:$<UPPER_CASE:$<TARGET_PROPERTY:CXX_WARNINGS_AS_ERRORS>>,ON>:-Werror>
     )
-    if(CMAKE_${COMPILER}_COMPILER_ID MATCHES "Clang")
+    if(CMAKE_${COMPILER}_COMPILER_ID MATCHES "Clang" OR CMAKE_${COMPILER}_COMPILER_ID MATCHES "AppleClang")
         add_compile_options(
                 $<$<STREQUAL:$<UPPER_CASE:$<TARGET_PROPERTY:CXX_WARNINGS>>,ALL>:-Weverything>
                 $<$<STREQUAL:$<UPPER_CASE:$<TARGET_PROPERTY:CXX_WARNINGS>>,ALL>:-Wno-macro-redefined>
@@ -89,4 +89,3 @@ else()
         )
     endif()
 endif()
-
