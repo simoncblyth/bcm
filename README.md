@@ -1,7 +1,5 @@
-BCM
+Boost CMake Modules [![Build Status](https://travis-ci.com/BoostCMake/bcm.svg?branch=master)](https://travis-ci.com/BoostCMake/bcm)
 ===
-
-Boost cmake modules.
 
 Motivation
 ----------
