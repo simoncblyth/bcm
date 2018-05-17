@@ -1,4 +1,4 @@
-
+include(GNUInstallDirs)
 set(BCM_HEADER_VERSION_TEMPLATE_FILE "${CMAKE_CURRENT_LIST_DIR}/version.hpp")
 
 macro(bcm_set_parent VAR)
@@ -46,7 +46,7 @@ function(bcm_setup_version)
 
     if(PARSE_GENERATE_HEADER)
         configure_file("${BCM_HEADER_VERSION_TEMPLATE_FILE}" "${PARSE_GENERATE_HEADER}")
-        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PARSE_GENERATE_HEADER}" DESTINATION include)
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PARSE_GENERATE_HEADER}" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
     endif()
 
 endfunction()

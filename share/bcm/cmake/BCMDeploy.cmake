@@ -4,13 +4,18 @@ include(BCMInstallTargets)
 include(BCMExport)
 
 function(bcm_deploy)
-    set(options)
+    set(options SKIP_HEADER_INSTALL)
     set(oneValueArgs NAMESPACE COMPATIBILITY)
     set(multiValueArgs TARGETS INCLUDE)
 
     cmake_parse_arguments(PARSE "${options}" "${oneValueArgs}" "${multiValueArgs}"  ${ARGN})
 
-    bcm_install_targets(TARGETS ${PARSE_TARGETS} INCLUDE ${PARSE_INCLUDE})
+    if(PARSE_SKIP_HEADER_INSTALL)
+        bcm_install_targets(TARGETS ${PARSE_TARGETS} INCLUDE ${PARSE_INCLUDE} SKIP_HEADER_INSTALL)
+    else()
+        bcm_install_targets(TARGETS ${PARSE_TARGETS} INCLUDE ${PARSE_INCLUDE} )
+    endif()
+
     bcm_auto_pkgconfig(TARGET ${PARSE_TARGETS})
     bcm_auto_export(TARGETS ${PARSE_TARGETS} NAMESPACE ${PARSE_NAMESPACE} COMPATIBILITY ${PARSE_COMPATIBILITY})
 

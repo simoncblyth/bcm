@@ -1,7 +1,7 @@
 include(GNUInstallDirs)
 
 function(bcm_install_targets)
-    set(options)
+    set(options SKIP_HEADER_INSTALL)
     set(oneValueArgs EXPORT)
     set(multiValueArgs TARGETS INCLUDE)
 
@@ -22,12 +22,16 @@ function(bcm_install_targets)
             get_filename_component(INCLUDE_PATH ${INCLUDE} ABSOLUTE)
             target_include_directories(${TARGET} INTERFACE $<BUILD_INTERFACE:${INCLUDE_PATH}>)
         endforeach()
-        target_include_directories(${TARGET} INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>)
+        target_include_directories(${TARGET} INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${INCLUDE_INSTALL_DIR}>)
     endforeach()
 
-    foreach(INCLUDE ${PARSE_INCLUDE})
-        install(DIRECTORY ${INCLUDE}/ DESTINATION ${INCLUDE_INSTALL_DIR})
-    endforeach()
+
+    if(NOT PARSE_SKIP_HEADER_INSTALL)
+        message(STATUS "bcm_install_targets.proceed-with-install ${INCLUDE_INSTALL_DIR}  ")
+        foreach(INCLUDE ${PARSE_INCLUDE})
+            install(DIRECTORY ${INCLUDE}/ DESTINATION ${INCLUDE_INSTALL_DIR})
+        endforeach()
+    endif()
 
     install(TARGETS ${PARSE_TARGETS}
             EXPORT ${EXPORT_FILE}
