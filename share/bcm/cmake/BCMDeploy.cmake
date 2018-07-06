@@ -5,7 +5,7 @@ include(BCMExport)
 
 function(bcm_deploy)
     set(options SKIP_HEADER_INSTALL)
-    set(oneValueArgs NAMESPACE COMPATIBILITY)
+    set(oneValueArgs NAMESPACE COMPATIBILITY TOPMATTER)
     set(multiValueArgs TARGETS INCLUDE)
 
     cmake_parse_arguments(PARSE "${options}" "${oneValueArgs}" "${multiValueArgs}"  ${ARGN})
@@ -17,7 +17,7 @@ function(bcm_deploy)
     endif()
 
     bcm_auto_pkgconfig(TARGET ${PARSE_TARGETS})
-    bcm_auto_export(TARGETS ${PARSE_TARGETS} NAMESPACE ${PARSE_NAMESPACE} COMPATIBILITY ${PARSE_COMPATIBILITY})
+    bcm_auto_export(TARGETS ${PARSE_TARGETS} NAMESPACE ${PARSE_NAMESPACE} COMPATIBILITY ${PARSE_COMPATIBILITY} TOPMATTER ${PARSE_TOPMATTER})
 
     foreach(TARGET ${PARSE_TARGETS})
         get_target_property(TARGET_NAME ${TARGET} EXPORT_NAME)

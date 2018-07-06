@@ -41,7 +41,7 @@ endfunction()
 
 function(bcm_auto_export)
     set(options)
-    set(oneValueArgs NAMESPACE EXPORT NAME COMPATIBILITY)
+    set(oneValueArgs NAMESPACE EXPORT NAME COMPATIBILITY TOPMATTER)
     set(multiValueArgs TARGETS)
 
     cmake_parse_arguments(PARSE "${options}" "${oneValueArgs}" "${multiValueArgs}"  ${ARGN})
@@ -70,6 +70,9 @@ function(bcm_auto_export)
     set(CONFIG_FILE "${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_NAME}.cmake")
 
     set(CONFIG_FILE_CONTENT "
+# TOPMATTER
+${PARSE_TOPMATTER}
+
 include(CMakeFindDependencyMacro)
 ")
 
