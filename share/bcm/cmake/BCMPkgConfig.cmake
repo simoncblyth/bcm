@@ -91,9 +91,9 @@ function(bcm_preprocess_pkgconfig_property VAR TARGET PROP)
 
     get_target_property(OUT_PROP ${TARGET} ${PROP})
 
-    if(PC_VERBOSE)
-    message( STATUS "[bcm_preprocess_pkgconfig_property PROP:${PROP} OUT_PROP:${OUT_PROP} ")
-    endif()
+    #if(PC_VERBOSE)
+    #message( STATUS "[bcm_preprocess_pkgconfig_property PROP:${PROP} OUT_PROP:${OUT_PROP} ")
+    #endif()
 
     string(REPLACE "$<BUILD_INTERFACE:" "$<0:" OUT_PROP "${OUT_PROP}")
     string(REPLACE "$<INSTALL_INTERFACE:" "$<1:" OUT_PROP "${OUT_PROP}")
@@ -104,9 +104,9 @@ function(bcm_preprocess_pkgconfig_property VAR TARGET PROP)
 
     set(${VAR} ${OUT_PROP} PARENT_SCOPE)
 
-    if(PC_VERBOSE)
-    message( STATUS "]bcm_preprocess_pkgconfig_property PROP:${PROP} OUT_PROP:${OUT_PROP} ")
-    endif()
+    #if(PC_VERBOSE)
+    #message( STATUS "]bcm_preprocess_pkgconfig_property PROP:${PROP} OUT_PROP:${OUT_PROP} ")
+    #endif()
 
 endfunction()
 
@@ -170,6 +170,8 @@ function(bcm_auto_pkgconfig_each)
     get_property(TARGET_DESCRIPTION TARGET ${TARGET} PROPERTY INTERFACE_DESCRIPTION)
     get_property(TARGET_URL TARGET ${TARGET} PROPERTY INTERFACE_URL)
     get_property(TARGET_REQUIRES TARGET ${TARGET} PROPERTY INTERFACE_PKG_CONFIG_REQUIRES)
+    get_property(TARGET_LINK_LIBS TARGET ${TARGET} PROPERTY INTERFACE_LINK_LIBRARIES)
+
     if(NOT TARGET_TYPE STREQUAL "INTERFACE_LIBRARY")
         set(LIBS "${LIBS} -l${TARGET_NAME}")
     endif()
@@ -179,15 +181,17 @@ function(bcm_auto_pkgconfig_each)
     endif()
  
 
-
     if(TARGET_REQUIRES)
         list(APPEND REQUIRES ${TARGET_REQUIRES})
         if(PC_VERBOSE)
         message(STATUS "bcm_auto_pkgconfig_each TARGET_REQUIRES:${TARGET_REQUIRES} " )
         endif()
     endif()
-    
-    bcm_preprocess_pkgconfig_property(LINK_LIBS ${TARGET} INTERFACE_LINK_LIBRARIES)
+   
+    set(LINK_LIBS)
+    if(TARGET_LINK_LIBS)
+        bcm_preprocess_pkgconfig_property(LINK_LIBS ${TARGET} INTERFACE_LINK_LIBRARIES)
+    endif()
 
     if(PC_VERBOSE)
     message(STATUS "bcm_auto_pkgconfig_each LINK_LIBS:${LINK_LIBS} " )
@@ -222,19 +226,15 @@ function(bcm_auto_pkgconfig_each)
             set(LIBS "${LIBS} $<$<NOT:${HAS_LIB_TARGET}>:-l${LIB}>")
 
             if(PC_VERBOSE)
-            message(STATUS "bcm_auto_pkgconfig_each NON-TARGET LIB:${LIB} LIBS:${LIBS} " )
+            message(STATUS "bcm_auto_pkgconfig_each NON-TARGET LIB:${LIB} LIB_TARGET_NAME:${LIB_TARGET_NAME} LIBS:${LIBS} " )
             endif()
         endif()
     endforeach()
 
-    # cannot filter exclude REQUIRES here as not blankcs yet. rather great big generator expressions
+    # cannot filter exclude REQUIRES to remove blanks here as they are great big generator expressions
     if(PC_VERBOSE)
-    message(STATUS "bcm_auto_pkgconfig_each [REQUIRES:${REQUIRES} " )
+    message(STATUS "bcm_auto_pkgconfig_each REQUIRES:${REQUIRES} LIBS:${LIBS} " )
     endif()
-    if(PC_VERBOSE)
-    message(STATUS "bcm_auto_pkgconfig_each ]REQUIRES:${REQUIRES} " )
-    endif()
- 
 
 
     bcm_preprocess_pkgconfig_property(INCLUDE_DIRS ${TARGET} INTERFACE_INCLUDE_DIRECTORIES)
@@ -267,7 +267,12 @@ function(bcm_auto_pkgconfig_each)
     endif()
 
     if(LIBS)
-        set(CONTENT "${CONTENT}\n$<$<BOOL:${LIBS}>:Libs: -L\${libdir} ${LIBS}>")
+        #set(CONTENT "${CONTENT}\n$<$<BOOL:${LIBS}>:Libs: -L\${libdir} ${LIBS}>")
+        set(CONTENT "${CONTENT}\nLibs: -L\${libdir} ${LIBS}")
+    else()
+        if(PC_VERBOSE)
+        message(STATUS "bcm_auto_pkgconfig_each.NO-LIBS" ) 
+        endif()
     endif()
 
     if(REQUIRES)
@@ -277,10 +282,14 @@ function(bcm_auto_pkgconfig_each)
         string(REPLACE ";" "," REQUIRES_CONTENT "${REQUIRES}")
 
         if(PC_VERBOSE)
-        message(STATUS "REQUIRES_CONTENT ${REQUIRES_CONTENT}" ) 
+        message(STATUS "bcm_auto_pkgconfig_each.REQUIRES_CONTENT ${REQUIRES_CONTENT}" ) 
         endif()
 
         set(CONTENT "${CONTENT}\nRequires: ${REQUIRES_CONTENT}")
+    endif()
+
+    if(PC_VERBOSE)
+    message(STATUS "bcm_auto_pkgconfig_each.CONTENT ${CONTENT}" ) 
     endif()
 
     file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME_LOWER}.pc CONTENT
