@@ -16,7 +16,9 @@ define_property(TARGET PROPERTY "INTERFACE_PKG_CONFIG_REQUIRES"
   FULL_DOCS "A list of packages required by this package. The versions of these packages may be specified using the comparison operators =, <, >, <= or >=."
 )
 
+
 function(bcm_generate_pkgconfig_file)
+    # confusingly this appears to be dead code
     set(options)
     set(oneValueArgs NAME LIB_DIR INCLUDE_DIR DESCRIPTION)
     set(multiValueArgs TARGETS CFLAGS LIBS REQUIRES)
@@ -72,8 +74,27 @@ Requires: ${PARSE_REQUIRES}
 
 endfunction()
 
+
+
+#[=[
+bcm_preprocess_pkgconfig_property
+-----------------------------------
+
+Progressive string replacements applied to a target property
+
+1. keep INSTALL_INTERFACE and scrub BUILD_INTERFACE via CMake generator expressions
+2. translate CMake argot into pkg-config variables includedir,libdir and prefix
+
+#]=]
+
 function(bcm_preprocess_pkgconfig_property VAR TARGET PROP)
+
     get_target_property(OUT_PROP ${TARGET} ${PROP})
+
+    if(PC_VERBOSE)
+    message( STATUS "[bcm_preprocess_pkgconfig_property PROP:${PROP} OUT_PROP:${OUT_PROP} ")
+    endif()
+
     string(REPLACE "$<BUILD_INTERFACE:" "$<0:" OUT_PROP "${OUT_PROP}")
     string(REPLACE "$<INSTALL_INTERFACE:" "$<1:" OUT_PROP "${OUT_PROP}")
 
@@ -83,7 +104,37 @@ function(bcm_preprocess_pkgconfig_property VAR TARGET PROP)
 
     set(${VAR} ${OUT_PROP} PARENT_SCOPE)
 
+    if(PC_VERBOSE)
+    message( STATUS "]bcm_preprocess_pkgconfig_property PROP:${PROP} OUT_PROP:${OUT_PROP} ")
+    endif()
+
 endfunction()
+
+
+
+#[=[
+bcm_auto_pkgconfig_each
+-----------------------------------
+
+Translate properties from a CMake target into variables 
+and write them to a pkg-config pc file 
+
+Relevant target properties:
+
+INTERFACE_LINK_LIBRARIES
+    crucial way to access the list of targets that the argument target depends on 
+
+INTERFACE_PKG_CONFIG_NAME
+    dependent target property used for pc names
+
+INTERFACE_PKG_CONFIG_REQUIRES 
+    typically not used, but rather this is auto obtained from the targets that 
+    this target depends on
+
+The pkg-config pc name for the argument target comes from the lowercased 
+project name.
+
+#]=]
 
 function(bcm_auto_pkgconfig_each)
     set(options)
@@ -125,15 +176,33 @@ function(bcm_auto_pkgconfig_each)
 
     if(TARGET_REQUIRES)
         list(APPEND REQUIRES ${TARGET_REQUIRES})
+        if(PC_VERBOSE)
+        message(STATUS "bcm_auto_pkgconfig_each TARGET_REQUIRES:${TARGET_REQUIRES} " )
+        endif()
     endif()
     
     bcm_preprocess_pkgconfig_property(LINK_LIBS ${TARGET} INTERFACE_LINK_LIBRARIES)
+
+    if(PC_VERBOSE)
+    message(STATUS "bcm_auto_pkgconfig_each LINK_LIBS:${LINK_LIBS} " )
+    endif()
+
     foreach(LIB ${LINK_LIBS})
         if(TARGET ${LIB})
             get_property(LIB_PKGCONFIG_NAME TARGET ${LIB} PROPERTY INTERFACE_PKG_CONFIG_NAME)
+
+            if(PC_VERBOSE)
+            message(STATUS "bcm_auto_pkgconfig_each LIB_PKGCONFIG_NAME:${LIB_PKGCONFIG_NAME} " )
+            endif()
+
             # TODO: Error if this property is missing
             if(LIB_PKGCONFIG_NAME)
                 list(APPEND REQUIRES ${LIB_PKGCONFIG_NAME})
+                if(PC_VERBOSE)
+                message(STATUS "bcm_auto_pkgconfig_each LIB:${LIB} : appending REQUIRES:${REQUIRES}" )
+                endif()
+            else()
+                message(STATUS "bcm_auto_pkgconfig_each LIB:${LIB} : MISSING LIB_PKGCONFIG_NAME " ) 
             endif()
         else()
             if("${LIB}" MATCHES "::")
@@ -208,7 +277,14 @@ function(bcm_auto_pkgconfig)
 
     cmake_parse_arguments(PARSE "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+
+
+
     list(LENGTH PARSE_TARGET TARGET_COUNT)
+
+    if(PC_VERBOSE)
+    message(STATUS "bcm_auto_pkgconfig PARSE_TARGET:${PARSE_TARGET} TARGET_COUNT:${TARGET_COUNT} PARSE_NAME:${PARSE_NAME} ")
+    endif()
 
     if(TARGET_COUNT EQUAL 1)
         bcm_auto_pkgconfig_each(TARGET ${PARSE_TARGET} NAME ${PARSE_NAME})
