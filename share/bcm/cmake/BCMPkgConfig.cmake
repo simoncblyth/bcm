@@ -174,6 +174,12 @@ function(bcm_auto_pkgconfig_each)
         set(LIBS "${LIBS} -l${TARGET_NAME}")
     endif()
 
+    if(PC_VERBOSE)
+    message(STATUS "bcm_auto_pkgconfig_each LIBS:${LIBS}  TARGET_NAME:${TARGET_NAME} TARGET_TYPE:${TARGET_TYPE} " )
+    endif()
+ 
+
+
     if(TARGET_REQUIRES)
         list(APPEND REQUIRES ${TARGET_REQUIRES})
         if(PC_VERBOSE)
@@ -212,9 +218,24 @@ function(bcm_auto_pkgconfig_each)
             endif()
             bcm_shadow_exists(HAS_LIB_TARGET ${LIB})
             list(APPEND REQUIRES "$<${HAS_LIB_TARGET}:$<TARGET_PROPERTY:${LIB_TARGET_NAME},INTERFACE_PKG_CONFIG_NAME>>")
-            set(LIBS "${LIBS} $<$<NOT:${HAS_LIB_TARGET}>:${LIB}>")
+
+            set(LIBS "${LIBS} $<$<NOT:${HAS_LIB_TARGET}>:-l${LIB}>")
+
+            if(PC_VERBOSE)
+            message(STATUS "bcm_auto_pkgconfig_each NON-TARGET LIB:${LIB} LIBS:${LIBS} " )
+            endif()
         endif()
     endforeach()
+
+    # cannot filter exclude REQUIRES here as not blankcs yet. rather great big generator expressions
+    if(PC_VERBOSE)
+    message(STATUS "bcm_auto_pkgconfig_each [REQUIRES:${REQUIRES} " )
+    endif()
+    if(PC_VERBOSE)
+    message(STATUS "bcm_auto_pkgconfig_each ]REQUIRES:${REQUIRES} " )
+    endif()
+ 
+
 
     bcm_preprocess_pkgconfig_property(INCLUDE_DIRS ${TARGET} INTERFACE_INCLUDE_DIRECTORIES)
     if(INCLUDE_DIRS)
@@ -250,7 +271,15 @@ function(bcm_auto_pkgconfig_each)
     endif()
 
     if(REQUIRES)
+        # collapse the genex and then filter empties : avoids confusing pkg-config
+        list(TRANSFORM REQUIRES GENEX_STRIP) 
+        list(FILTER REQUIRES EXCLUDE REGEX "^$")
         string(REPLACE ";" "," REQUIRES_CONTENT "${REQUIRES}")
+
+        if(PC_VERBOSE)
+        message(STATUS "REQUIRES_CONTENT ${REQUIRES_CONTENT}" ) 
+        endif()
+
         set(CONTENT "${CONTENT}\nRequires: ${REQUIRES_CONTENT}")
     endif()
 
