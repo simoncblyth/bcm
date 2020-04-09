@@ -247,10 +247,28 @@ function(bcm_auto_pkgconfig_each)
             else()
                 set(LIB_TARGET_NAME "${LIB}")
             endif()
+
             bcm_shadow_exists(HAS_LIB_TARGET ${LIB})
             list(APPEND REQUIRES "$<${HAS_LIB_TARGET}:$<TARGET_PROPERTY:${LIB_TARGET_NAME},INTERFACE_PKG_CONFIG_NAME>>")
 
-            set(LIBS "${LIBS} $<$<NOT:${HAS_LIB_TARGET}>:-l${LIB}>")
+            #[=[
+            When the lib starts with a slash indicating an absolute path or starts with "-" suggesting 
+            an already formatted "-l" the LLIB just takes asis, otherwise the "-l" prefixing is added 
+            #]=]
+
+            if("${LIB}" MATCHES "^[-/]")
+                 set(LLIB ${LIB})
+                 if(PC_VERBOSE)
+                 message(STATUS "bcm_auto_pkgconfig_each LIB MATCH      LLIB : ${LLIB} ")
+                 endif()
+            else()
+                 set(LLIB "-l${LIB}")
+                 if(PC_VERBOSE)
+                 message(STATUS "bcm_auto_pkgconfig_each LIB NO-MATCH   LLIB : ${LLIB} ")
+                 endif()
+            endif()
+
+            set(LIBS "${LIBS} $<$<NOT:${HAS_LIB_TARGET}>:${LLIB}>")
 
             if(PC_VERBOSE)
             message(STATUS "bcm_auto_pkgconfig_each NON-TARGET LIB:${LIB} LIB_TARGET_NAME:${LIB_TARGET_NAME} LIBS:${LIBS} " )
