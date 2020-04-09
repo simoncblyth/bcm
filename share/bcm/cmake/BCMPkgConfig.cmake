@@ -136,6 +136,21 @@ project name.
 
 #]=]
 
+macro(list_difference var_name list1 list2)
+  # Create list var_name with of elements from list1 that are not in list2
+  set(filter_tmp "")
+  message(STATUS "list1:${list1}") 
+  message(STATUS "list2:${list2}") 
+  foreach(l ${list1})
+    message(STATUS "l:${l}")    
+    if(NOT "${list2}" MATCHES "(^|;)${l}(;|$)")
+      set(filter_tmp ${filter_tmp} ${l})
+    endif() 
+   endforeach()
+  set(${var_name} ${filter_tmp})
+endmacro()
+
+
 function(bcm_auto_pkgconfig_each)
     set(options)
     set(oneValueArgs NAME TARGET)
@@ -172,12 +187,24 @@ function(bcm_auto_pkgconfig_each)
     get_property(TARGET_REQUIRES TARGET ${TARGET} PROPERTY INTERFACE_PKG_CONFIG_REQUIRES)
     get_property(TARGET_LINK_LIBS TARGET ${TARGET} PROPERTY INTERFACE_LINK_LIBRARIES)
 
+    get_property(TARGET_ILL TARGET ${TARGET} PROPERTY INTERFACE_LINK_LIBRARIES)
+    get_property(TARGET_LL TARGET ${TARGET} PROPERTY LINK_LIBRARIES)
+    get_property(TARGET_ILDL TARGET ${TARGET} PROPERTY IMPORTED_LINK_DEPENDENT_LIBRARIES)
+
+    list_difference(TARGET_PRIVLIB "${TARGET_LL}" "${TARGET_ILL}")
+
+
+
     if(NOT TARGET_TYPE STREQUAL "INTERFACE_LIBRARY")
         set(LIBS "${LIBS} -l${TARGET_NAME}")
     endif()
 
     if(PC_VERBOSE)
     message(STATUS "bcm_auto_pkgconfig_each LIBS:${LIBS}  TARGET_NAME:${TARGET_NAME} TARGET_TYPE:${TARGET_TYPE} " )
+    message(STATUS "bcm_auto_pkgconfig_each TARGET_ILL :${TARGET_ILL} " )
+    message(STATUS "bcm_auto_pkgconfig_each TARGET_LL  :${TARGET_LL} " )
+    message(STATUS "bcm_auto_pkgconfig_each TARGET_ILDL:${TARGET_ILDL} " )
+    message(STATUS "bcm_auto_pkgconfig_each TARGET_PRIVLIB:${TARGET_PRIVLIB} " )
     endif()
  
 
