@@ -76,6 +76,7 @@ endfunction()
 
 
 
+
 #[=[
 bcm_preprocess_pkgconfig_property
 -----------------------------------
@@ -136,19 +137,26 @@ project name.
 
 #]=]
 
-macro(list_difference var_name list1 list2)
-  # Create list var_name with of elements from list1 that are not in list2
-  set(filter_tmp "")
-  message(STATUS "list1:${list1}") 
-  message(STATUS "list2:${list2}") 
-  foreach(l ${list1})
-    message(STATUS "l:${l}")    
-    if(NOT "${list2}" MATCHES "(^|;)${l}(;|$)")
-      set(filter_tmp ${filter_tmp} ${l})
-    endif() 
-   endforeach()
-  set(${var_name} ${filter_tmp})
-endmacro()
+
+function(bcm_list_difference outvar l1 l2) 
+    # Create list outvar with elements from l1 that are not in l2
+    set(tmp)
+    foreach( l ${l1} ) 
+      if( NOT ${l} IN_LIST l2 )
+        list(APPEND tmp ${l}) 
+      endif()
+    endforeach()
+    set(${outvar} ${tmp} PARENT_SCOPE)
+endfunction()
+
+function(bcm_list_difference_test)
+    set(l1 A B C)
+    set(l2 A C Z)
+    message(STATUS "l1:${l1}")
+    message(STATUS "l2:${l2}")
+    bcm_list_difference(l1ml2  "${l1}" "${l2}")
+    message(STATUS "l1ml2:${l1ml2}")
+endfunction()
 
 
 function(bcm_auto_pkgconfig_each)
@@ -191,8 +199,7 @@ function(bcm_auto_pkgconfig_each)
     get_property(TARGET_LL TARGET ${TARGET} PROPERTY LINK_LIBRARIES)
     get_property(TARGET_ILDL TARGET ${TARGET} PROPERTY IMPORTED_LINK_DEPENDENT_LIBRARIES)
 
-    list_difference(TARGET_PRIVLIB "${TARGET_LL}" "${TARGET_ILL}")
-
+    bcm_list_difference(TARGET_PRIVLIB ${TARGET_LL} ${TARGET_ILL})
 
 
     if(NOT TARGET_TYPE STREQUAL "INTERFACE_LIBRARY")
@@ -339,6 +346,9 @@ function(bcm_auto_pkgconfig_each)
 
     file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME_LOWER}.pc CONTENT
 "
+
+# bcm_auto_pkgconfig_each
+
 prefix=${CMAKE_INSTALL_PREFIX}
 exec_prefix=\${prefix}
 libdir=\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}
