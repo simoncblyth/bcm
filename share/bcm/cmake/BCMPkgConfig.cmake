@@ -199,8 +199,7 @@ function(bcm_auto_pkgconfig_each)
     get_property(TARGET_LL TARGET ${TARGET} PROPERTY LINK_LIBRARIES)
     get_property(TARGET_ILDL TARGET ${TARGET} PROPERTY IMPORTED_LINK_DEPENDENT_LIBRARIES)
 
-    bcm_list_difference(TARGET_PRIVLIB ${TARGET_LL} ${TARGET_ILL})
-
+    bcm_list_difference(TARGET_PRIVLIB "${TARGET_LL}" "${TARGET_ILL}")
 
     if(NOT TARGET_TYPE STREQUAL "INTERFACE_LIBRARY")
         set(LIBS "${LIBS} -l${TARGET_NAME}")
