@@ -17,8 +17,12 @@ define_property(TARGET PROPERTY "INTERFACE_PKG_CONFIG_REQUIRES"
 )
 
 
+
+#[=[
+
+CAUTION THIS IS DEAD CODE 
+
 function(bcm_generate_pkgconfig_file)
-    # confusingly this appears to be dead code
     set(options)
     set(oneValueArgs NAME LIB_DIR INCLUDE_DIR DESCRIPTION)
     set(multiValueArgs TARGETS CFLAGS LIBS REQUIRES)
@@ -74,6 +78,7 @@ Requires: ${PARSE_REQUIRES}
 
 endfunction()
 
+#]=]
 
 
 
@@ -230,6 +235,10 @@ function(bcm_auto_pkgconfig_each)
     message(STATUS "bcm_auto_pkgconfig_each LINK_LIBS:${LINK_LIBS} " )
     endif()
 
+#[=[
+
+#]=]     
+
     foreach(LIB ${LINK_LIBS})
         if(TARGET ${LIB})
             get_property(LIB_PKGCONFIG_NAME TARGET ${LIB} PROPERTY INTERFACE_PKG_CONFIG_NAME)
@@ -343,7 +352,16 @@ function(bcm_auto_pkgconfig_each)
     message(STATUS "bcm_auto_pkgconfig_each.CONTENT ${CONTENT}" ) 
     endif()
 
-    file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME_LOWER}.pc CONTENT
+    # formerly wrote ${PACKAGE_NAME_LOWER}.pc
+
+
+    set(PC_STEM ${PACKAGE_NAME})
+    if(PC_VERBOSE)
+    message(STATUS "bcm_auto_pkgconfig_each generate PC_STEM:${PC_STEM} " )
+    endif()
+
+
+    file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${PC_STEM}.pc CONTENT
 "
 
 # bcm_auto_pkgconfig_each
@@ -358,8 +376,8 @@ Version: ${PROJECT_VERSION}
 ${CONTENT}
 "
   )
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME_LOWER}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-    set_property(TARGET ${TARGET} PROPERTY INTERFACE_PKG_CONFIG_NAME ${PACKAGE_NAME_LOWER})
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PC_STEM}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+    set_property(TARGET ${TARGET} PROPERTY INTERFACE_PKG_CONFIG_NAME ${PC_STEM})
 endfunction()
 
 function(bcm_auto_pkgconfig)
@@ -370,15 +388,21 @@ function(bcm_auto_pkgconfig)
     cmake_parse_arguments(PARSE "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
 
-
-
     list(LENGTH PARSE_TARGET TARGET_COUNT)
 
     if(PC_VERBOSE)
     message(STATUS "bcm_auto_pkgconfig PARSE_TARGET:${PARSE_TARGET} TARGET_COUNT:${TARGET_COUNT} PARSE_NAME:${PARSE_NAME} ")
     endif()
 
-    if(TARGET_COUNT EQUAL 1)
+#[=[  
+TARGET_COUNT 1 without PARSE_NAME is normal in Opticks usage where the invokation 
+is of the form::
+
+    bcm_deploy(TARGETS ${name} NAMESPACE Opticks:: SKIP_HEADER_INSTALL TOPMATTER  "...")
+
+#]=]
+   
+    if(TARGET_COUNT EQUAL 1)  
         bcm_auto_pkgconfig_each(TARGET ${PARSE_TARGET} NAME ${PARSE_NAME})
     else()
         string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
@@ -403,6 +427,11 @@ function(bcm_auto_pkgconfig)
         set(DESCRIPTION "No description")
 
         if(GENERATE_PROJECT_PC)
+
+            if(PC_VERBOSE)
+            message(STATUS "bcm_auto_pkgconfig.GENERATE_PROJECT_PC ")  # have not observed this 
+            endif()
+
             file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME_LOWER}.pc CONTENT
 "
 Name: ${PACKAGE_NAME_LOWER}

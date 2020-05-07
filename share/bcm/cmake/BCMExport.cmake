@@ -1,3 +1,4 @@
+
 include(GNUInstallDirs)
 include(WriteBasicConfigVersionFile)
 
@@ -36,8 +37,41 @@ function(bcm_get_target_package_source OUT_VAR TARGET)
         bcm_shadow_exists(HAS_TARGET ${TARGET})
         set(RESULT "$<${HAS_TARGET}:$<TARGET_PROPERTY:${TARGET_NAME},INTERFACE_FIND_PACKAGE_NAME>>")
     endif()
+
+    if(BCM_VERBOSE)
+    message(STATUS "bcm_get_target_package_source ${RESULT}")
+    endif()
+
     set(${OUT_VAR} "${RESULT}" PARENT_SCOPE)
 endfunction()
+
+
+
+#[=[
+https://cmake.org/cmake/help/latest/command/find_package.html
+
+The command searches for a file called <PackageName>Config.cmake 
+or <lower-case-package-name>-config.cmake for each name specified.
+
+
+bcm_auto_export generates CMake boiler plate that acts as
+the persisted targets.
+
+Files generated with original lower cased naming:: 
+
+
+    sysrap-config.cmake                   # TOPMATTER, find_dependency PLog and OKConf then includes the below  
+
+        properties-sysrap-targets.cmake   # sets INTERFACE_PKG_CONFIG_NAME sysrap
+
+        sysrap-targets.cmake              # creates imported targets, sets properties, glob imports for each config
+
+            sysrap-targets-debug.cmake    # sets IMPORTED_LOCATION_DEBUG
+
+    sysrap-config-version.cmake           # version checking, very boilerplate 
+
+#]=]
+
 
 function(bcm_auto_export)
     set(options)
@@ -70,6 +104,7 @@ function(bcm_auto_export)
     set(CONFIG_FILE "${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_NAME}.cmake")
 
     set(CONFIG_FILE_CONTENT "
+# PROJECT_NAME ${PROJECT_NAME}
 # TOPMATTER
 ${PARSE_TOPMATTER}
 
@@ -99,6 +134,8 @@ include(CMakeFindDependencyMacro)
         endforeach()
         # Export custom properties
         set(EXPORT_PROPERTIES)
+
+
         foreach(TARGET ${PARSE_TARGETS})
             # TODO: Make this a property: the custom properties to be exported
             foreach(PROPERTY INTERFACE_PKG_CONFIG_NAME)
@@ -107,7 +144,23 @@ include(CMakeFindDependencyMacro)
 $<$<BOOL:${PROP}>:set_target_properties(${EXPORT_LIB_TARGET_${TARGET}} PROPERTIES ${PROPERTY} ${PROP})>
 ")
             endforeach()
+
+            set(EXPORT_PROPERTIES "${EXPORT_PROPERTIES}
+set_target_properties(${EXPORT_LIB_TARGET_${TARGET}} PROPERTIES INTERFACE_INSTALL_CONFIGFILE_BCM \${CMAKE_CURRENT_LIST_FILE})
+set_target_properties(${EXPORT_LIB_TARGET_${TARGET}} PROPERTIES INTERFACE_INSTALL_CONFIGDIR_BCM \${CMAKE_CURRENT_LIST_DIR})
+set_target_properties(${EXPORT_LIB_TARGET_${TARGET}} PROPERTIES INTERFACE_INSTALL_LIBDIR_BCM \${CMAKE_INSTALL_LIBDIR})
+set_target_properties(${EXPORT_LIB_TARGET_${TARGET}} PROPERTIES INTERFACE_INSTALL_INCLUDEDIR_BCM \${CMAKE_INSTALL_INCLUDEDIR})
+set_target_properties(${EXPORT_LIB_TARGET_${TARGET}} PROPERTIES INTERFACE_INSTALL_PREFIX_BCM \${CMAKE_INSTALL_PREFIX})
+")
+
         endforeach()
+#[=[
+Example of what this generates::
+
+    set_target_properties(Opticks::NPY PROPERTIES INTERFACE_PKG_CONFIG_NAME npy)
+#]=]
+
+
         string(APPEND CONFIG_FILE_CONTENT "
 include(\"\${CMAKE_CURRENT_LIST_DIR}/${TARGET_FILE}.cmake\")
 include(\"\${CMAKE_CURRENT_LIST_DIR}/properties-${TARGET_FILE}.cmake\")

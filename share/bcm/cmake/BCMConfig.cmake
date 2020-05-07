@@ -1,3 +1,11 @@
+
+
+set(BCM_MODULE "${CMAKE_CURRENT_LIST_FILE}")
+if(BCM_VERBOSE)
+   message(STATUS "BCM_MODULE:${BCM_MODULE}")
+endif()
+
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
 include(BCMFuture)
 enable_testing()
